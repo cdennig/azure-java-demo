@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.microsoft.demo.model.Project;
 import com.microsoft.demo.repository.ProjectRepository;
+import io.swagger.annotations.Api;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/v1/")
+@Api(value="project", description="Operations on Project entities.")
 public class ProjectsController {
 
     @Autowired
