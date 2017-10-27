@@ -1,5 +1,5 @@
 CREATE TABLE PROJECT(
-	ID INT,
+	ID INT IDENTITY(1,1),
 	NAME VARCHAR(255),
 	DESCRIPTION VARCHAR(2000),
 	ESTIMATED_COST INT,
@@ -9,7 +9,6 @@ CREATE TABLE PROJECT(
 );
 
 INSERT INTO PROJECT VALUES(
-    '1',
     'Death Star',
     'Build a space station, the whole galaxy is afraid of!',
     20000000,
@@ -19,7 +18,6 @@ INSERT INTO PROJECT VALUES(
 );
 
 INSERT INTO PROJECT VALUES(
-    '2',
     'Become a Jedi',
     'Fly to Dagobah and finish the training in order to become a Jedi!',
     500,
