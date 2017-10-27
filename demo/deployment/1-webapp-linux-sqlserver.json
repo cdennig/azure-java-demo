@@ -1,0 +1,203 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "skuName": {
+            "type": "string",
+            "defaultValue": "S1",
+            "allowedValues": [
+                "B1",
+                "B2",
+                "B3",
+                "S1",
+                "S2",
+                "S3",
+                "P1",
+                "P2",
+                "P3",
+                "P4"
+            ],
+            "metadata": {
+                "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+            }
+        },
+        "skuCapacity": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 1,
+            "metadata": {
+                "description": "Describes plan's instance count"
+            }
+        },
+        "sqlAdministratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "The admin user of the SQL Server"
+            }
+        },
+        "sqlAdministratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password of the admin user of the SQL Server"
+            }
+        }
+    },
+    "variables": {
+        "hostingPlanName": "[concat('hostingplan', uniqueString(resourceGroup().id))]",
+        "webSiteName": "[concat('webSite', uniqueString(resourceGroup().id))]",
+        "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+        "databaseName": "sampledb"
+    },
+    "resources": [
+        {
+            "name": "[variables('sqlserverName')]",
+            "type": "Microsoft.Sql/servers",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "SqlServer"
+            },
+            "apiVersion": "2014-04-01",
+            "properties": {
+                "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+                "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+                "version": "12.0"
+            },
+            "resources": [
+                {
+                    "name": "[variables('databaseName')]",
+                    "type": "databases",
+                    "location": "[resourceGroup().location]",
+                    "tags": {
+                        "displayName": "Database"
+                    },
+                    "apiVersion": "2015-01-01",
+                    "dependsOn": [
+                        "[variables('sqlserverName')]"
+                    ],
+                    "properties": {
+                        "edition": "Basic",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "maxSizeBytes": "1073741824",
+                        "requestedServiceObjectiveName": "Basic"
+                    }
+                },
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2014-04-01",
+                    "dependsOn": [
+                        "[variables('sqlserverName')]"
+                    ],
+                    "location": "[resourceGroup().location]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "endIpAddress": "0.0.0.0",
+                        "startIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "sku": {
+                "name": "[parameters('skuName')]",
+                "capacity": "[parameters('skuCapacity')]"
+            },
+            "kind": "linux",
+            "name": "[variables('hostingPlanName')]",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "scale": null,
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "workerTierName": null,
+                "adminSiteName": null,
+                "hostingEnvironmentProfile": null,
+                "perSiteScaling": false,
+                "reserved": true,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "kind": "app,linux",
+            "name": "[variables('webSiteName')]",
+            "apiVersion": "2016-08-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "enabled": true,
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "reserved": true,
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "SPRING_DATASOURCE_USERNAME",
+                            "value": "[parameters('sqlAdministratorLogin')]"
+                        },
+                        {
+                            "name": "SPRING_DATASOURCE_PASSWORD",
+                            "value": "[parameters('sqlAdministratorLoginPassword')]"
+                        },
+                        {
+                            "name": "DATASOURCE_FLYWAY_USERNAME",
+                            "value": "[parameters('sqlAdministratorLogin')]"
+                        },
+                        {
+                            "name": "DATASOURCE_FLYWAY_PASSWORD",
+                            "value": "[parameters('sqlAdministratorLoginPassword')]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "apiVersion": "2016-08-01",
+                    "type": "config",
+                    "name": "connectionstrings",
+                    "dependsOn": [
+                        "[variables('webSiteName')]"
+                    ],
+                    "properties": {
+                        "SPRING_DATASOURCE_URL": {
+                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]",
+                            "type": "SQLAzure"
+                        },
+                        "DATASOURCE_FLYWAY_URL": {
+                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]",
+                            "type": "SQLAzure"
+                        }
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Web/sites/config",
+            "name": "[concat(variables('webSiteName'), '/web')]",
+            "apiVersion": "2016-08-01",
+            "location": "West Europe",
+            "scale": null,
+            "properties": {
+                "linuxFxVersion": "DOCKER|nginx",
+                "publishingUsername": "$demonginx"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+            ]
+        }
+    ],
+    "outputs": {
+        "siteUri": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Web/sites/', variables('webSiteName'))).hostnames[0]]"
+        },
+        "sqlSvrFqdn": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName]"
+        }
+    }
+}
