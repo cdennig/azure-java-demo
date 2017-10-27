@@ -7,6 +7,7 @@ import com.microsoft.demo.repository.ProjectRepository;
 import io.swagger.annotations.Api;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,29 +21,33 @@ public class ProjectsController {
     @Autowired
     private ProjectRepository projectRepository;
 
-    @RequestMapping(value = "projects", method = RequestMethod.GET)
+    @PreAuthorize("hasRole('ROLE_javadevs')")
+    @RequestMapping(value = "api/projects", method = RequestMethod.GET)
     public List<Project> list() {
         return projectRepository.findAll();
     }
 
-    @RequestMapping(value = "projects", method = RequestMethod.POST)
+    @PreAuthorize("hasRole('ROLE_javadevs')")
+    @RequestMapping(value = "api/projects", method = RequestMethod.POST)
     public Project create(@RequestBody Project project) {
         return projectRepository.saveAndFlush(project);
     }
 
-    @RequestMapping(value = "projects/{id}", method = RequestMethod.GET)
+    @PreAuthorize("hasRole('ROLE_javadevs')")
+    @RequestMapping(value = "api/projects/{id}", method = RequestMethod.GET)
     public Project get(@PathVariable Long id) {
         return projectRepository.findOne(id);
     }
 
-    @RequestMapping(value = "projects/{id}", method = RequestMethod.PUT)
+    @PreAuthorize("hasRole('ROLE_javadevs')")
+    @RequestMapping(value = "api/projects/{id}", method = RequestMethod.PUT)
     public Project update(@PathVariable Long id, @RequestBody Project project) {
         Project existingProject = projectRepository.findOne(id);
         BeanUtils.copyProperties(project, existingProject);
         return projectRepository.saveAndFlush(existingProject);
     }
-
-    @RequestMapping(value = "projects/{id}", method = RequestMethod.DELETE)
+    @PreAuthorize("hasRole('ROLE_javadevs')")
+    @RequestMapping(value = "api/projects/{id}", method = RequestMethod.DELETE)
     public Project delete(@PathVariable Long id) {
         Project existingProject = projectRepository.findOne(id);
         projectRepository.delete(existingProject);
