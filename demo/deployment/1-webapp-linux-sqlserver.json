@@ -147,30 +147,18 @@
                         {
                             "name": "DATASOURCE_FLYWAY_PASSWORD",
                             "value": "[parameters('sqlAdministratorLoginPassword')]"
+                        },
+                        {
+                            "name": "SPRING_DATASOURCE_URL",
+                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]"
+                        },
+                        {
+                            "name": "DATASOURCE_FLYWAY_URL",
+                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]"
                         }
                     ]
                 }
             },
-            "resources": [
-                {
-                    "apiVersion": "2016-08-01",
-                    "type": "config",
-                    "name": "connectionstrings",
-                    "dependsOn": [
-                        "[variables('webSiteName')]"
-                    ],
-                    "properties": {
-                        "SPRING_DATASOURCE_URL": {
-                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]",
-                            "type": "SQLAzure"
-                        },
-                        "DATASOURCE_FLYWAY_URL": {
-                            "value": "[concat(' jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ':1433;database=', variables('databaseName'), ';user=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';password=', parameters('sqlAdministratorLoginPassword'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]",
-                            "type": "SQLAzure"
-                        }
-                    }
-                }
-            ],
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
             ]
